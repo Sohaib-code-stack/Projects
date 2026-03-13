@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Glitch Typewriter — Hacked Transmission</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --charcoal: #1a1a1a;
+    --charcoal-deep: #111111;
+    --charcoal-mid: #232323;
+    --cream: #f0e6d0;
+    --cream-dim: #b8a98a;
+    --ink-red: #c0392b;
+    --ink-red-glow: rgba(192, 57, 43, 0.4);
+    --green-terminal: #39ff14;
+    --green-dim: rgba(57, 255, 20, 0.15);
+    --scan-line: rgba(255,255,255,0.02);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--charcoal-deep);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Share Tech Mono', monospace;
+    overflow: hidden;
+  }
+
+  /* Scan-line overlay on entire page */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      var(--scan-line) 2px,
+      var(--scan-line) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ── CARD ── */
+  .card {
+    position: relative;
+    width: min(680px, 96vw);
+    background: var(--charcoal-mid);
+    border: 2px solid var(--cream-dim);
+    padding: 0;
+    overflow: hidden;
+    /* hard offset box-shadow — graphic novel style */
+    box-shadow:
+      6px 6px 0 var(--ink-red),
+      12px 12px 0 rgba(192,57,43,0.2),
+      0 0 60px rgba(0,0,0,0.8);
+  }
+
+  /* Halftone texture overlay */
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(240,230,208,0.06) 1px, transparent 1px);
+    background-size: 6px 6px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── HEADER BAR ── */
+  .card-header {
+    position: relative;
+    background: var(--charcoal-deep);
+    border-bottom: 2px solid var(--cream-dim);
+    padding: 10px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 1;
+  }
+
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-red   { background: var(--ink-red); box-shadow: 0 0 6px var(--ink-red); }
+  .dot-amber { background: #e67e22; }
+  .dot-green { background: var(--green-terminal); }
+
+  .header-label {
+    margin-left: auto;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--cream-dim);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  /* ── BODY ── */
+  .card-body {
+    position: relative;
+    padding: 36px 36px 28px;
+    z-index: 1;
+  }
+
+  /* Transmission label */
+  .transmission-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--green-terminal);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .transmission-label::before {
+    content: '▶';
+    animation: blink-green 1s step-end infinite;
+  }
+  @keyframes blink-green {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  /* ── MAIN GLITCH TEXT ── */
+  .glitch-display {
+    font-family: 'Bangers', cursive;
+    font-size: clamp(42px, 8vw, 72px);
+    color: var(--cream);
+    letter-spacing: 4px;
+    line-height: 1.05;
+    min-height: 1.2em;
+    position: relative;
+    /* text-shadow stack for depth */
+    text-shadow:
+      3px 3px 0 var(--ink-red),
+      0 0 30px rgba(240,230,208,0.15);
+    word-break: break-all;
+  }
+
+  .glitch-display.is-glitching {
+    animation: glitch-shake 0.08s ease infinite;
+  }
+
+  @keyframes glitch-shake {
+    0%   { transform: translate(0, 0); }
+    25%  { transform: translate(-2px, 1px); }
+    50%  { transform: translate(2px, -1px); }
+    75%  { transform: translate(-1px, -2px); }
+    100% { transform: translate(1px, 1px); }
+  }
+
+  /* RGB split on glitch chars */
+  .glitch-char {
+    display: inline-block;
+    color: var(--green-terminal);
+    position: relative;
+    animation: char-flicker 0.05s step-end infinite;
+  }
+  .glitch-char::before {
+    content: attr(data-char);
+    position: absolute;
+    left: 2px; top: 0;
+    color: var(--ink-red);
+    opacity: 0.8;
+  }
+  .glitch-char::after {
+    content: attr(data-char);
+    position: absolute;
+    left: -2px; top: 0;
+    color: #00d4ff;
+    opacity: 0.8;
+  }
+
+  @keyframes char-flicker {
+    0%, 100% { opacity: 1; }
+    33%  { opacity: 0.4; }
+    66%  { opacity: 1; }
+  }
+
+  /* Blinking cursor */
+  .cursor {
+    display: inline-block;
+    width: 3px;
+    height: 0.85em;
+    background: var(--cream);
+    margin-left: 4px;
+    vertical-align: middle;
+    animation: cursor-blink 0.7s step-end infinite;
+    position: relative;
+    top: -4px;
+  }
+  .cursor.hidden { display: none; }
+
+  /* ── SUB TEXT ── */
+  .sub-text {
+    margin-top: 20px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--cream-dim);
+    letter-spacing: 1.5px;
+    line-height: 1.7;
+    min-height: 2.5em;
+  }
+
+  .sub-text .typed-sub {
+    border-right: 1px solid var(--cream-dim);
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    margin: 24px 0;
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, var(--ink-red), var(--cream-dim), transparent);
+  }
+
+  /* ── STATUS ROW ── */
+  .status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .status-item {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--cream-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .status-item span {
+    color: var(--green-terminal);
+  }
+
+  .status-item.error span {
+    color: var(--ink-red);
+    animation: blink-green 0.4s step-end infinite;
+  }
+
+  /* ── REPLAY BUTTON ── */
+  .replay-btn {
+    font-family: 'Bangers', cursive;
+    font-size: 16px;
+    letter-spacing: 3px;
+    color: var(--charcoal-deep);
+    background: var(--cream);
+    border: none;
+    padding: 8px 20px;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 var(--ink-red);
+    transition: transform 0.1s, box-shadow 0.1s;
+    text-transform: uppercase;
+  }
+  .replay-btn:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 0 var(--ink-red);
+  }
+  .replay-btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 var(--ink-red);
+  }
+
+  /* ── NOISE BARS (glitch artifact) ── */
+  .noise-bar {
+    position: absolute;
+    left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+      transparent,
+      rgba(57,255,20,0.6),
+      rgba(192,57,43,0.6),
+      transparent
+    );
+    pointer-events: none;
+    opacity: 0;
+    z-index: 10;
+  }
+
+  @keyframes noise-sweep {
+    0%   { top: 0%; opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+  }
+
+  /* ── SIDE DECORATION ── */
+  .side-tag {
+    position: absolute;
+    right: -1px;
+    top: 50%;
+    transform: translateY(-50%) rotate(90deg);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 4px;
+    color: var(--ink-red);
+    background: var(--charcoal-deep);
+    border: 1px solid var(--ink-red);
+    padding: 4px 10px;
+    transform-origin: center;
+    white-space: nowrap;
+  }
+
+  @keyframes cursor-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="card" id="card">
+  <!-- Decorative noise bars (animated on glitch) -->
+  <div class="noise-bar" id="noisebar"></div>
+
+  <div class="card-header">
+    <div class="dot dot-red"></div>
+    <div class="dot dot-amber"></div>
+    <div class="dot dot-green"></div>
+    <div class="header-label">SHB_TERMINAL v0.3 ░░</div>
+  </div>
+
+  <div class="card-body">
+    <div class="transmission-label">INCOMING TRANSMISSION</div>
+
+    <div class="glitch-display" id="glitch-display">
+      <span id="text-output"></span><span class="cursor" id="cursor"></span>
+    </div>
+
+    <p class="sub-text" id="sub-text"></p>
+
+    <hr class="divider">
+
+    <div class="status-row">
+      <div class="status-item">SIGNAL: <span id="signal-val">──</span></div>
+      <div class="status-item">INTEGRITY: <span id="integrity-val">──</span></div>
+      <div class="status-item error">ERR: <span id="err-val">0x00</span></div>
+      <button class="replay-btn" id="replay-btn" onclick="startSequence()">↺ REPLAY</button>
+    </div>
+  </div>
+
+  <div class="side-tag">ENCRYPTED // CLASS-A</div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  CONFIG
+// ─────────────────────────────────────────────
+const WORDS = [
+  "BLACKOUT",
+  "CORRUPTED",
+  "OVERRIDE",
+  "REDACTED",
+  "SIGNAL_LOST",
+  "DECRYPT",
+  "EXECUTE",
+];
+
+const SUB_LINES = [
+  "Transmission intercepted. Origin: UNKNOWN.",
+  "Auth bypass detected on port 7734.",
+  "Memory integrity compromised. Proceed?",
+  "Signal rerouted through 14 proxies.",
+  "Checksum mismatch — data may be altered.",
+  "Unknown entity requesting system access.",
+  "Decryption key verified. File unlocked.",
+];
+
+const GLITCH_CHARS = "!@#$%^&*<>?/|\\~`0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ█▓▒░▄▀■□●○";
+const ERR_CODES = ["0xDEAD","0xFF3A","0x1337","0xC0DE","0xBAD1","0xNULL","0xGLCH"];
+
+// ─────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────
+let wordIndex = 0;
+let running = false;
+let masterTimer = null;
+
+// ─────────────────────────────────────────────
+//  DOM REFS
+// ─────────────────────────────────────────────
+const display   = document.getElementById('glitch-display');
+const textOut   = document.getElementById('text-output');
+const cursor    = document.getElementById('cursor');
+const subText   = document.getElementById('sub-text');
+const signalVal = document.getElementById('signal-val');
+const integVal  = document.getElementById('integrity-val');
+const errVal    = document.getElementById('err-val');
+const noiseBar  = document.getElementById('noisebar');
+const card      = document.getElementById('card');
+
+// ─────────────────────────────────────────────
+//  UTILITIES
+// ─────────────────────────────────────────────
+function randomChar() {
+  return GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)];
+}
+
+function randomBetween(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function setSignal(val) {
+  signalVal.textContent = val;
+}
+function setIntegrity(val) {
+  integVal.textContent = val;
+}
+function setErr(code) {
+  errVal.textContent = code;
+}
+
+// ─────────────────────────────────────────────
+//  NOISE BAR EFFECT
+// ─────────────────────────────────────────────
+function fireNoise() {
+  noiseBar.style.animation = 'none';
+  noiseBar.offsetHeight; // reflow
+  noiseBar.style.animation = `noise-sweep ${randomBetween(3,5) * 0.1}s linear`;
+}
+
+// ─────────────────────────────────────────────
+//  TYPEWRITER
+//  Returns a promise that resolves when done
+// ─────────────────────────────────────────────
+async function typeWord(word, speed = 90) {
+  textOut.textContent = '';
+  cursor.classList.remove('hidden');
+  for (let i = 0; i < word.length; i++) {
+    textOut.textContent += word[i];
+    await sleep(speed + randomBetween(-20, 30));
+  }
+}
+
+// ─────────────────────────────────────────────
+//  GLITCH PHASE
+//  Scrambles some characters then resolves
+// ─────────────────────────────────────────────
+async function glitchResolve(finalWord) {
+  display.classList.add('is-glitching');
+  cursor.classList.add('hidden');
+  setErr(ERR_CODES[Math.floor(Math.random() * ERR_CODES.length)]);
+  fireNoise();
+
+  const SCRAMBLE_ROUNDS = 8;
+  const SCRAMBLE_DELAY  = 55;
+
+  for (let round = 0; round < SCRAMBLE_ROUNDS; round++) {
+    // Build a mixed string: some final chars already settled, rest scrambled
+    let settled = Math.floor((round / SCRAMBLE_ROUNDS) * finalWord.length);
+    let html = '';
+
+    for (let i = 0; i < finalWord.length; i++) {
+      if (i < settled) {
+        // settled characters — plain cream
+        html += `<span style="color:var(--cream)">${finalWord[i]}</span>`;
+      } else {
+        // scrambled character with RGB split
+        const ch = randomChar();
+        html += `<span class="glitch-char" data-char="${ch}">${ch}</span>`;
+      }
+    }
+
+    textOut.innerHTML = html;
+    await sleep(SCRAMBLE_DELAY);
+  }
+
+  // Final resolved state — all plain
+  textOut.textContent = finalWord;
+  display.classList.remove('is-glitching');
+  setIntegrity('100%');
+  setErr('0x00');
+}
+
+// ─────────────────────────────────────────────
+//  SUB-TEXT TYPEWRITER (smaller)
+// ─────────────────────────────────────────────
+async function typeSub(line, speed = 30) {
+  subText.textContent = '';
+  for (let i = 0; i < line.length; i++) {
+    subText.textContent += line[i];
+    await sleep(speed + randomBetween(-10, 15));
+  }
+}
+
+// ─────────────────────────────────────────────
+//  STATIC / NOISE INTRO (before typing)
+// ─────────────────────────────────────────────
+async function noiseIntro(duration = 400) {
+  const end = Date.now() + duration;
+  cursor.classList.add('hidden');
+
+  while (Date.now() < end) {
+    const len = randomBetween(3, 8);
+    let s = '';
+    for (let i = 0; i < len; i++) s += randomChar();
+    textOut.innerHTML = `<span class="glitch-char" data-char="${s[0]}">${s}</span>`;
+    setSignal(`${randomBetween(10,80)}%`);
+    setIntegrity(`${randomBetween(10,60)}%`);
+    setErr(ERR_CODES[Math.floor(Math.random() * ERR_CODES.length)]);
+    fireNoise();
+    await sleep(60);
+  }
+
+  textOut.innerHTML = '';
+}
+
+// ─────────────────────────────────────────────
+//  MAIN SEQUENCE
+// ─────────────────────────────────────────────
+async function startSequence() {
+  if (running) return;
+  running = true;
+
+  const word    = WORDS[wordIndex % WORDS.length];
+  const subLine = SUB_LINES[wordIndex % SUB_LINES.length];
+  wordIndex++;
+
+  // Reset
+  subText.textContent = '';
+  setSignal('──');
+  setIntegrity('──');
+  setErr('0x00');
+  display.classList.remove('is-glitching');
+
+  // Phase 1: noise static
+  await noiseIntro(450);
+
+  // Phase 2: signal acquired
+  setSignal('ACQUIRED');
+  cursor.classList.remove('hidden');
+  await sleep(200);
+
+  // Phase 3: type it out
+  await typeWord(word, 85);
+  await sleep(300);
+
+  // Phase 4: glitch scramble → resolve
+  await glitchResolve(word);
+
+  // Phase 5: cursor blink pause
+  cursor.classList.remove('hidden');
+  await sleep(500);
+  cursor.classList.add('hidden');
+
+  // Phase 6: sub-text appears
+  await sleep(200);
+  await typeSub(subLine, 28);
+
+  running = false;
+}
+
+// ─────────────────────────────────────────────
+//  AUTO-CYCLE every 5 seconds
+// ─────────────────────────────────────────────
+function scheduleNext() {
+  clearTimeout(masterTimer);
+  masterTimer = setTimeout(async () => {
+    await startSequence();
+    scheduleNext();
+  }, 5200);
+}
+
+// KICK OFF
+(async () => {
+  await startSequence();
+  scheduleNext();
+})();
+</script>
+</body>
+</html>
