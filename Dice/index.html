@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        height: 100vh;
+        gap: 30px;
+      }
+      button {
+        padding: 10px;
+        border-radius: 50px;
+        border: none;
+        background-color: beige;
+        color: brown;
+        font-family: 'Courier New', Courier, monospace;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+      button:hover {
+        transform: scale(1.05);
+        box-shadow: 1px 1px 2px rgb(154, 154, 154);
+        background-color: brown;
+        color: beige;
+      }
+      button:active {
+        transform: scale(0.9);
+      }
+      .dice {
+        width: 100px;
+        height: 100px;
+        background-color: rgb(232, 231, 231);
+        border-radius: 10px;
+      }
+
+      img {
+        width: 100px;
+        height: 100px;
+      }
+
+      .invisible {
+        display: none;
+      }
+
+      .visible {
+        display: inline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dice">
+      <img class="invisible" src="1.png" alt="" id="one" />
+      <img class="invisible" src="2.png" alt="" id="two" />
+      <img class="invisible" src="3.png" alt="" id="three" />
+      <img class="invisible" src="4.png" alt="" id="four" />
+      <img class="invisible" src="5.png" alt="" id="five" />
+      <img class="invisible" src="6.png" alt="" id="six" />
+    </div>
+    <button id="roll">Roll The Dice</button>
+    <script>
+      let randNum;
+
+      one = document.getElementById("one");
+      two = document.getElementById("two");
+      three = document.getElementById("three");
+      four = document.getElementById("four");
+      five = document.getElementById("five");
+      six = document.getElementById("six");
+
+      roll = document.getElementById("roll");
+
+      roll.onclick = function () {
+        one.classList = "invisible";
+        two.classList = "invisible";
+        three.classList = "invisible";
+        four.classList = "invisible";
+        five.classList = "invisible";
+        six.classList = "invisible";
+        number = Math.random();
+        randNum = Math.floor(number * 6 + 1);
+        console.log(randNum);
+        if (randNum == 1) {
+          one.classList = "visible";
+        } else if (randNum == 2) {
+          two.classList = "visible";
+        } else if (randNum == 3) {
+          three.classList = "visible";
+        } else if (randNum == 4) {
+          four.classList = "visible";
+        } else if (randNum == 5) {
+          five.classList = "visible";
+        } else if (randNum == 6) {
+          six.classList = "visible";
+        }
+      };
+    </script>
+  </body>
+</html>
