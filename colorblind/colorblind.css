@@ -27,7 +27,6 @@ body {
   overflow-x: hidden;
 }
 
-/* ─── CURSOR ─── */
 * {
   cursor: none !important;
 }
@@ -51,7 +50,6 @@ body {
   height: 40px;
 }
 
-/* ─── HERO ─── */
 .hero {
   min-height: 100svh;
   display: flex;
@@ -255,7 +253,6 @@ body {
   text-align: right;
 }
 
-/* ─── SECTION LABEL ─── */
 .section-label {
   padding: 3.5rem 2.5rem 1.5rem;
   display: flex;
@@ -278,7 +275,6 @@ body {
   background: var(--light-gray);
 }
 
-/* ─── BENTO GRIDS ─── */
 .bento {
   display: grid;
   padding: 0 2.5rem;
@@ -296,7 +292,6 @@ body {
   grid-template-rows: 200px 340px;
 }
 
-/* ─── BENTO CARD BASE ─── */
 .b {
   border-radius: var(--card-radius);
   padding: 2rem 2.2rem;
@@ -317,7 +312,6 @@ body {
   z-index: 10;
 }
 
-/* Color overlay layer */
 .b::after {
   content: "";
   position: absolute;
@@ -356,7 +350,6 @@ body {
   background: linear-gradient(135deg, #3d5afe 0%, #00e5ff 100%);
 }
 
-/* All content above color layer */
 .b-inner {
   position: relative;
   z-index: 1;
@@ -365,7 +358,6 @@ body {
   flex-direction: column;
 }
 
-/* ─── DECORATIVE SHAPES ─── */
 .shape {
   position: absolute;
   pointer-events: none;
@@ -385,7 +377,6 @@ body {
   clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
 }
 
-/* ─── TYPOGRAPHY ─── */
 .b-tag {
   font-size: 0.5rem;
   letter-spacing: 0.3em;
@@ -464,7 +455,6 @@ body {
   background: rgba(255, 255, 255, 0.15);
 }
 
-/* ─── DARK CARDS ─── */
 .b-dark {
   background: #1a1a1a;
 }
@@ -481,7 +471,6 @@ body {
   color: #555;
 }
 
-/* ─── GRID 1 SPANS ─── */
 .b1 {
   grid-column: span 5;
 }
@@ -501,7 +490,6 @@ body {
   grid-column: span 3;
 }
 
-/* ─── GRID 2 SPANS ─── */
 .b7 {
   grid-column: span 3;
 }
@@ -521,7 +509,6 @@ body {
   grid-column: span 4;
 }
 
-/* ─── PILL BADGES ─── */
 .pill-card {
   display: flex;
   align-items: center;
@@ -560,7 +547,6 @@ body {
   background: currentColor;
 }
 
-/* ─── MARQUEE ─── */
 .marquee-wrap {
   margin: 3.5rem 0;
   overflow: hidden;
@@ -628,7 +614,6 @@ body {
   }
 }
 
-/* ─── MANIFESTO ─── */
 .manifesto-row {
   padding: 0 2.5rem;
   margin-bottom: 14px;
@@ -737,7 +722,6 @@ body {
   color: #aaa;
 }
 
-/* ─── FOOTER ─── */
 footer {
   padding: 2.5rem;
   display: flex;
@@ -764,7 +748,6 @@ footer {
   color: var(--light-gray);
 }
 
-/* ─── RESPONSIVE ─── */
 @media (max-width: 1000px) {
   .bento-1,
   .bento-2 {
