@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drag to Reorder — Comic Panels</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --charcoal: #1a1a1a;
+    --deep: #111111;
+    --cream: #f0e8d5;
+    --cream-dim: #c8b99a;
+    --ink-red: #c0392b;
+    --ink-red-dark: #922b21;
+    --border: 3px solid #000;
+    --panel-shadow: 6px 6px 0px #000;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--charcoal);
+    font-family: 'Special Elite', serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* Halftone background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(240,232,213,0.06) 1px, transparent 1px);
+    background-size: 18px 18px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 2rem 2.5rem 1rem;
+    display: flex;
+    align-items: flex-end;
+    gap: 1.5rem;
+    border-bottom: var(--border);
+    background: var(--deep);
+  }
+
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 0; right: 0;
+    height: 3px;
+    background: var(--ink-red);
+  }
+
+  .site-tag {
+    font-family: 'Bangers', cursive;
+    font-size: 3rem;
+    color: var(--cream);
+    letter-spacing: 0.05em;
+    line-height: 1;
+  }
+
+  .site-tag span {
+    color: var(--ink-red);
+  }
+
+  .subtitle {
+    font-family: 'Special Elite', serif;
+    color: var(--cream-dim);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding-bottom: 0.35rem;
+  }
+
+  .instruction-bar {
+    position: relative;
+    z-index: 10;
+    background: var(--ink-red);
+    padding: 0.5rem 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 2px solid #000;
+  }
+
+  .instruction-bar span {
+    font-family: 'Bangers', cursive;
+    font-size: 1.1rem;
+    color: var(--cream);
+    letter-spacing: 0.1em;
+  }
+
+  .instruction-bar .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--cream);
+    opacity: 0.6;
+  }
+
+  /* GRID */
+  .grid-wrapper {
+    position: relative;
+    z-index: 5;
+    padding: 2.5rem;
+  }
+
+  #panel-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: 260px;
+    gap: 1.5rem;
+  }
+
+  /* PANEL */
+  .panel {
+    position: relative;
+    background: var(--cream);
+    border: var(--border);
+    box-shadow: var(--panel-shadow);
+    cursor: grab;
+    transition: box-shadow 0.15s, transform 0.15s, opacity 0.15s;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  .panel:active { cursor: grabbing; }
+
+  .panel:hover {
+    box-shadow: 10px 10px 0px #000;
+    transform: translate(-2px, -2px);
+    z-index: 20;
+  }
+
+  /* Panel number badge */
+  .panel-num {
+    position: absolute;
+    top: 0; left: 0;
+    background: #000;
+    color: var(--cream);
+    font-family: 'Bangers', cursive;
+    font-size: 1.1rem;
+    letter-spacing: 0.05em;
+    padding: 0.15rem 0.5rem;
+    z-index: 5;
+  }
+
+  /* Drag grip icon top-right */
+  .grip {
+    position: absolute;
+    top: 0; right: 0;
+    width: 28px; height: 28px;
+    background: var(--ink-red);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .panel:hover .grip { opacity: 1; }
+
+  .grip-line {
+    width: 14px; height: 2px;
+    background: var(--cream);
+    border-radius: 1px;
+  }
+
+  /* Panel inner content area */
+  .panel-inner {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    gap: 0.75rem;
+  }
+
+  .panel-icon {
+    font-size: 3.5rem;
+    line-height: 1;
+    filter: grayscale(1) contrast(2);
+  }
+
+  .panel-title {
+    font-family: 'Bangers', cursive;
+    font-size: 1.4rem;
+    letter-spacing: 0.08em;
+    color: #111;
+    text-align: center;
+  }
+
+  .panel-desc {
+    font-family: 'Special Elite', serif;
+    font-size: 0.72rem;
+    color: #333;
+    text-align: center;
+    line-height: 1.5;
+    max-width: 170px;
+  }
+
+  .panel-tag {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: #111;
+    color: var(--cream-dim);
+    font-family: 'Special Elite', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.75rem;
+    text-align: center;
+    border-top: 2px solid #000;
+  }
+
+  /* Panel accent bar on left edge */
+  .panel::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: var(--ink-red);
+  }
+
+  /* Each panel gets a unique subtle tint */
+  .panel[data-id="1"] { background: #f5edda; }
+  .panel[data-id="2"] { background: #f0e8d5; }
+  .panel[data-id="3"] { background: #ede4cf; }
+  .panel[data-id="4"] { background: #f2ead8; }
+  .panel[data-id="5"] { background: #efe6d2; }
+  .panel[data-id="6"] { background: #f4ecda; }
+
+  /* --- DRAG STATES --- */
+  .panel.dragging {
+    opacity: 0.3;
+    box-shadow: 2px 2px 0 #000;
+    transform: none;
+    cursor: grabbing;
+  }
+
+  .panel.drag-over {
+    outline: 3px dashed var(--ink-red);
+    outline-offset: -3px;
+    background: #e8ddc8;
+    box-shadow: 12px 12px 0 var(--ink-red-dark);
+    transform: scale(1.03) translate(-2px,-2px);
+    z-index: 30;
+  }
+
+  /* Drop flash animation */
+  @keyframes dropFlash {
+    0%   { background: #c0392b22; }
+    50%  { background: #c0392b44; }
+    100% { background: inherit; }
+  }
+
+  .panel.dropped {
+    animation: dropFlash 0.35s ease;
+  }
+
+  /* Floating drag ghost */
+  #drag-ghost {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    transform: rotate(-3deg) scale(1.05);
+    box-shadow: 14px 14px 0 rgba(0,0,0,0.5);
+    border: 3px solid #000;
+    background: var(--cream);
+    padding: 0.5rem 1rem;
+    font-family: 'Bangers', cursive;
+    font-size: 1.2rem;
+    letter-spacing: 0.1em;
+    color: #111;
+    opacity: 0;
+    transition: opacity 0.1s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+  }
+
+  #drag-ghost.visible { opacity: 0.95; }
+
+  #drag-ghost::before {
+    content: '';
+    display: block;
+    width: 4px;
+    align-self: stretch;
+    background: var(--ink-red);
+    margin-right: 0.25rem;
+  }
+
+  /* Order counter */
+  .order-strip {
+    position: relative;
+    z-index: 10;
+    padding: 1rem 2.5rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    border-top: 2px solid #000;
+    background: var(--deep);
+  }
+
+  .order-label {
+    font-family: 'Bangers', cursive;
+    color: var(--cream-dim);
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+    margin-right: 0.5rem;
+  }
+
+  .order-item {
+    font-family: 'Bangers', cursive;
+    font-size: 0.9rem;
+    color: var(--cream);
+    background: #333;
+    border: 2px solid #000;
+    padding: 0.15rem 0.5rem;
+    letter-spacing: 0.05em;
+    transition: background 0.3s;
+  }
+
+  .order-item.highlight {
+    background: var(--ink-red);
+  }
+
+  .order-arrow {
+    color: var(--ink-red);
+    font-family: 'Bangers', cursive;
+    font-size: 0.9rem;
+  }
+
+  /* Ink splat on drop */
+  .splat {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9998;
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: var(--ink-red);
+    opacity: 0;
+    transform: scale(0);
+    animation: splat 0.4s ease-out forwards;
+  }
+
+  @keyframes splat {
+    0%   { opacity: 0.7; transform: scale(0); }
+    60%  { opacity: 0.5; transform: scale(1.4); }
+    100% { opacity: 0; transform: scale(1.8); }
+  }
+
+  /* Scanline overlay for texture */
+  .scanlines {
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(0,0,0,0.03) 3px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+</style>
+</head>
+<body>
+
+<div class="scanlines"></div>
+
+<header>
+  <div class="site-tag">SHB<span>.</span>DEV</div>
+  <div class="subtitle">drag &amp; reorder — panel demo / js event showcase</div>
+</header>
+
+<div class="instruction-bar">
+  <div class="dot"></div>
+  <span>GRAB ANY PANEL — DRAG IT — DROP IT ON ANOTHER</span>
+  <div class="dot"></div>
+  <span>PANELS SWAP POSITIONS</span>
+  <div class="dot"></div>
+</div>
+
+<div class="grid-wrapper">
+  <div id="panel-grid">
+
+    <div class="panel" data-id="1" draggable="true">
+      <div class="panel-num">01</div>
+      <div class="grip"><div class="grip-line"></div><div class="grip-line"></div><div class="grip-line"></div></div>
+      <div class="panel-inner">
+        <div class="panel-icon">⚡</div>
+        <div class="panel-title">DRAGSTART</div>
+        <div class="panel-desc">Fires when the user begins dragging this panel. Sets the drag payload.</div>
+      </div>
+      <div class="panel-tag">event · dragstart</div>
+    </div>
+
+    <div class="panel" data-id="2" draggable="true">
+      <div class="panel-num">02</div>
+      <div class="grip"><div class="grip-line"></div><div class="grip-line"></div><div class="grip-line"></div></div>
+      <div class="panel-inner">
+        <div class="panel-icon">🌀</div>
+        <div class="panel-title">DRAGOVER</div>
+        <div class="panel-desc">Fires continuously as you hover. preventDefault() to allow dropping here.</div>
+      </div>
+      <div class="panel-tag">event · dragover</div>
+    </div>
+
+    <div class="panel" data-id="3" draggable="true">
+      <div class="panel-num">03</div>
+      <div class="grip"><div class="grip-line"></div><div class="grip-line"></div><div class="grip-line"></div></div>
+      <div class="panel-inner">
+        <div class="panel-icon">💥</div>
+        <div class="panel-title">DROP</div>
+        <div class="panel-desc">Fires on release. Reads stored data and swaps DOM nodes in the grid.</div>
+      </div>
+      <div class="panel-tag">event · drop</div>
+    </div>
+
+    <div class="panel" data-id="4" draggable="true">
+      <div class="panel-num">04</div>
+      <div class="grip"><div class="grip-line"></div><div class="grip-line"></div><div class="grip-line"></div></div>
+      <div class="panel-inner">
+        <div class="panel-icon">🧩</div>
+        <div class="panel-title">DOM SWAP</div>
+        <div class="panel-desc">insertBefore() moves elements without cloning. The grid reshuffles live.</div>
+      </div>
+      <div class="panel-tag">technique · dom manipulation</div>
+    </div>
+
+    <div class="panel" data-id="5" draggable="true">
+      <div class="panel-num">05</div>
+      <div class="grip"><div class="grip-line"></div><div class="grip-line"></div><div class="grip-line"></div></div>
+      <div class="panel-inner">
+        <div class="panel-icon">🎯</div>
+        <div class="panel-title">STATE</div>
+        <div class="panel-desc">A draggedEl variable tracks the source panel across the entire drag lifecycle.</div>
+      </div>
+      <div class="panel-tag">concept · ui state</div>
+    </div>
+
+    <div class="panel" data-id="6" draggable="true">
+      <div class="panel-num">06</div>
+      <div class="grip"><div class="grip-line"></div><div class="grip-line"></div><div class="grip-line"></div></div>
+      <div class="panel-inner">
+        <div class="panel-icon">✨</div>
+        <div class="panel-title">DRAGEND</div>
+        <div class="panel-desc">Cleanup phase — removes .dragging class and resets all visual states.</div>
+      </div>
+      <div class="panel-tag">event · dragend</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="order-strip" id="order-strip">
+  <span class="order-label">ORDER:</span>
+</div>
+
+<!-- Custom ghost label -->
+<div id="drag-ghost">
+  <span id="ghost-text">PANEL</span>
+</div>
+
+<script>
+  const grid = document.getElementById('panel-grid');
+  const ghost = document.getElementById('drag-ghost');
+  const ghostText = document.getElementById('ghost-text');
+  const orderStrip = document.getElementById('order-strip');
+
+  let draggedEl = null;
+  let mouseX = 0, mouseY = 0;
+
+  // Track mouse for ghost positioning
+  document.addEventListener('mousemove', e => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    if (ghost.classList.contains('visible')) {
+      ghost.style.left = (mouseX + 16) + 'px';
+      ghost.style.top  = (mouseY - 20) + 'px';
+    }
+  });
+
+  function getPanels() {
+    return Array.from(grid.querySelectorAll('.panel'));
+  }
+
+  function updateOrderStrip(highlightId = null) {
+    const panels = getPanels();
+    orderStrip.innerHTML = '<span class="order-label">ORDER:</span>';
+    panels.forEach((p, i) => {
+      const id = p.dataset.id;
+      const item = document.createElement('span');
+      item.className = 'order-item' + (id === highlightId ? ' highlight' : '');
+      item.textContent = `P${id}`;
+      orderStrip.appendChild(item);
+      if (i < panels.length - 1) {
+        const arrow = document.createElement('span');
+        arrow.className = 'order-arrow';
+        arrow.textContent = '›';
+        orderStrip.appendChild(arrow);
+      }
+    });
+  }
+
+  function spawnSplat(x, y) {
+    const s = document.createElement('div');
+    s.className = 'splat';
+    s.style.left = (x - 30) + 'px';
+    s.style.top  = (y - 30) + 'px';
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 450);
+  }
+
+  // Attach events to all panels (and re-attach after swaps)
+  function attachEvents(panel) {
+    panel.addEventListener('dragstart', onDragStart);
+    panel.addEventListener('dragover',  onDragOver);
+    panel.addEventListener('dragleave', onDragLeave);
+    panel.addEventListener('drop',      onDrop);
+    panel.addEventListener('dragend',   onDragEnd);
+  }
+
+  function onDragStart(e) {
+    draggedEl = this;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', this.dataset.id);
+
+    // Hide native ghost — use our custom one
+    const blankImg = new Image();
+    blankImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    e.dataTransfer.setDragImage(blankImg, 0, 0);
+
+    // Show custom ghost
+    const title = this.querySelector('.panel-title').textContent;
+    ghostText.textContent = title;
+    ghost.style.left = (mouseX + 16) + 'px';
+    ghost.style.top  = (mouseY - 20) + 'px';
+
+    setTimeout(() => {
+      this.classList.add('dragging');
+      ghost.classList.add('visible');
+    }, 10);
+  }
+
+  function onDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (this !== draggedEl) {
+      this.classList.add('drag-over');
+    }
+  }
+
+  function onDragLeave(e) {
+    this.classList.remove('drag-over');
+  }
+
+  function onDrop(e) {
+    e.preventDefault();
+    if (!draggedEl || draggedEl === this) return;
+
+    this.classList.remove('drag-over');
+
+    // Swap positions in DOM
+    const allPanels = getPanels();
+    const fromIdx = allPanels.indexOf(draggedEl);
+    const toIdx   = allPanels.indexOf(this);
+
+    if (fromIdx < toIdx) {
+      grid.insertBefore(draggedEl, this.nextSibling);
+    } else {
+      grid.insertBefore(draggedEl, this);
+    }
+
+    // Splat effect at drop point
+    const rect = this.getBoundingClientRect();
+    spawnSplat(rect.left + rect.width / 2, rect.top + rect.height / 2);
+
+    // Flash dropped panel
+    this.classList.add('dropped');
+    setTimeout(() => this.classList.remove('dropped'), 400);
+
+    updateOrderStrip(draggedEl.dataset.id);
+  }
+
+  function onDragEnd(e) {
+    if (draggedEl) draggedEl.classList.remove('dragging');
+    ghost.classList.remove('visible');
+    document.querySelectorAll('.panel.drag-over').forEach(p => p.classList.remove('drag-over'));
+    draggedEl = null;
+  }
+
+  // Init
+  getPanels().forEach(attachEvents);
+  updateOrderStrip();
+</script>
+</body>
+</html>
